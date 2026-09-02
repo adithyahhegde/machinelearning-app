@@ -6,6 +6,9 @@ on:
       - research-capacity-decisions
     paths:
       - 'research-capacity-decisions/**'
+  pull_request:
+    paths:
+      - 'research-capacity-decisions/**'
   workflow_dispatch:
     inputs:
       full_run:
