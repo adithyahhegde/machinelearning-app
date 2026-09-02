@@ -2,42 +2,51 @@
 
 **Project:** From Demand Forecasting to Capacity Decisions: Evaluating the Operational Value of Machine Learning Forecasts
 
-This research workspace implements a reproducible empirical study of whether better demand forecasts necessarily produce better operational capacity decisions.
-
 ## Research question
-Does higher demand-forecast accuracy necessarily translate into better operational capacity decisions?
+**Does higher demand-forecast accuracy necessarily translate into better operational capacity decisions?**
 
-## Study design
-Historical NYC Yellow Taxi pickup demand is transformed into hourly demand by service zone. Forecasts are generated using simple, interpretable models and then passed through a transparent capacity rule. Forecast quality and downstream operational performance are evaluated separately.
+## Empirical setting
+Public NYC Yellow Taxi trip records are aggregated into hourly pickup demand by taxi zone. NYC TLC publishes the trip records monthly in Parquet format and provides pickup timestamps and locations in the yellow-taxi data.
 
-The study deliberately avoids claiming that the number of forecasted trips equals physical taxi fleet size. Capacity is defined as **hourly service-capacity units**: the number of demand requests that the modeled operation is assumed able to serve during an hour. Under-capacity and excess-capacity are evaluated with scenario-based asymmetric costs rather than invented real-world dollar values.
+The operational unit is deliberately defined as **hourly service-capacity units**, not physical taxi fleet size. The data do not identify available vehicles or vehicle schedules, so the experiment is a transparent decision proxy rather than a literal fleet-sizing model.
 
 ## Models
-- Seasonal Naive baseline
+- Seasonal Naive
 - Ridge Regression
 - Random Forest
 - XGBoost
 
-## Operational evaluation
-For a forecast d-hat and buffer beta:
+## Decision rule
+For forecast \(\hat d_t\) and capacity buffer \(\beta\):
 
-`C_t = ceil(d-hat_t * (1 + beta))`
+`C_t = ceil(max(0, d_hat_t) * (1 + beta))`
 
-The analysis reports:
-- MAE, RMSE and sMAPE
-- capacity utilization
-- under-capacity frequency
-- excess capacity
-- service-level attainment
-- normalized asymmetric operational cost under multiple under-capacity/over-capacity penalty ratios
+Under-capacity and excess-capacity are evaluated separately and combined using normalized asymmetric penalty scenarios.
 
-## Reproducibility principles
-- Time-ordered train/validation/test splits
-- No future-data leakage
-- Model selection uses validation data only
-- Final results use an untouched test period
-- Public data are downloaded by the pipeline rather than committed to Git
-- All assumptions are explicit and sensitivity-tested
+## Evaluation
+Forecast metrics:
+- MAE
+- RMSE
+- sMAPE
+
+Operational metrics:
+- under-capacity amount and frequency;
+- excess capacity;
+- service-level attainment;
+- utilization;
+- normalized asymmetric operational cost.
+
+## Reproducibility rules
+- chronological train/validation/test split;
+- no future-demand features;
+- zone selection based only on information available before the test period;
+- model selection using validation data only;
+- all candidate models evaluated on the untouched test period;
+- no raw Parquet files committed to Git;
+- exact source months and configuration recorded in the run manifest.
+
+## Research status
+The literature review and methodology audit are now in the repository. Before any paper claims are written, the experiment must pass the audit in `paper/methodology_audit.md` and produce actual out-of-sample results.
 
 ## Repository layout
 ```text
@@ -45,20 +54,13 @@ research-capacity-decisions/
 ├── README.md
 ├── requirements.txt
 ├── data/README.md
-├── src/
-│   ├── data_preprocessing.py
-│   ├── feature_engineering.py
-│   ├── forecasting_models.py
-│   ├── capacity_simulation.py
-│   └── evaluation.py
-├── analysis/
-│   └── run_analysis.py
+├── analysis/run_analysis.py
+├── paper/
+│   ├── research_blueprint.md
+│   ├── literature_review.md
+│   └── methodology_audit.md
 ├── results/
 │   ├── tables/
 │   └── figures/
-└── .github/workflows/
-    └── research.yml
+└── .github/workflows/research.yml
 ```
-
-## Important methodological note
-The NYC taxi application is an operational test bed, not a claim that this simulation reproduces the complete economics of taxi fleet management. The contribution is the empirical evaluation of forecast-to-decision alignment using a transparent capacity proxy and public high-frequency demand data.
